@@ -1,0 +1,21 @@
+package GameEnginePackage;
+
+import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
+
+public class Test {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		System.out.println(System.getProperty("os.arch"));
+		String version = org.lwjgl.Version.getVersion();
+		System.out.println(version);
+		System.out.println("LWJGL version: " + org.lwjgl.Version.getVersion());
+		
+		if (!GLFW.glfwInit()) {
+            throw new IllegalStateException("GLFW failed");
+        }
+        System.out.println("GLFW natives loaded!");
+        GLFW.glfwTerminate();
+	}
+}

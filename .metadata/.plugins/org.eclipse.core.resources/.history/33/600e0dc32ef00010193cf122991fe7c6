@@ -1,0 +1,7 @@
+package GameEnginePackage;
+
+import org.lwjgl.glfw.GLFW;
+
+public class WindowDisplay {
+
+}

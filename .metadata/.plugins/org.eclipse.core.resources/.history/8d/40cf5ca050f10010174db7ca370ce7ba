@@ -1,0 +1,22 @@
+package GameEnginePackage;
+import GameEnginePackage.entity.Shader;
+
+public class ShaderManager extends Shader{
+	private static final String VERTEX_SHADER = 
+			"src/shaders/vertexShader.txt";
+	private static final String FRAGMENT_SHADER = 
+			"src/shaders/fragmentShader.txt";
+	
+	public ShaderManager() {
+		super(VERTEX_SHADER, FRAGMENT_SHADER);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected void bindAttributes() {
+		// TODO Auto-generated method stub
+		super.bindAtrtribute(0, "position");
+	}
+	
+	
+}

@@ -1,0 +1,14 @@
+package GameEnginePackage;
+
+import org.lwjgl.Version;
+
+public class Test {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		System.out.println(System.getProperty("os.arch"));
+		String version = org.lwjgl.Version.getVersion();
+		System.out.println(version);
+	}
+
+}

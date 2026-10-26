@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="GameEnginePackage/|GameEnginePackage/entity/" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/lwjgl-3.3.6/lwjgl-glfw/lwjgl-glfw.jar"/>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/lwjgl-3.3.6/lwjgl/lwjgl.jar"/>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/lwjgl-3.3.6/lwjgl-opengl/lwjgl-opengl.jar"/>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/lwjgl-release-3.3.6-custom (1)/joml-1.10.8.jar"/>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/slick-util/lib/slick-util.jar"/>
+	<classpathentry kind="lib" path="C:/Users/admin/Downloads/lwjgl-3.3.6/lwjgl-stb/lwjgl-stb.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

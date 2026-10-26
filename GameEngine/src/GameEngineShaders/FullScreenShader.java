@@ -1,0 +1,34 @@
+package GameEngineShaders;
+
+public class FullScreenShader extends Shader{
+	private static final String vertexFile =
+			"src/shaders/fullscreenVertex.txt";
+	private static final String fragmentFile = 
+			"src/shaders/fullscreenFragment.txt";
+	
+	private int location_Texture;
+	
+	public FullScreenShader() {
+		super(vertexFile, fragmentFile);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected void getAllUniformLocations() {
+		// TODO Auto-generated method stub
+		location_Texture = 
+				super.getUniformLocation("uTexture");
+	}
+
+	@Override
+	protected void bindAttributes() {
+		// TODO Auto-generated method stub
+		super.bindAttribute(0, "position");
+		super.bindAttribute(1, "uv");
+	}
+	
+	public void connectTextureUnit() {
+		super.loadInt(location_Texture, 0);
+	}
+	
+}

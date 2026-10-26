@@ -1,0 +1,5 @@
+package GameEnginePackage.utils;
+
+public class Consts {
+	public static final String TITLE = "DEV ENGINE";
+}

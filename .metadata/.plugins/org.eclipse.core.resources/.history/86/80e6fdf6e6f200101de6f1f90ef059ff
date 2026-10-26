@@ -1,0 +1,61 @@
+package GameEnginePackage;
+
+import java.nio.FloatBuffer;
+
+import org.lwjgl.opengl.GL30;
+
+import GameEnginePackage.entity.BlurShader;
+import GameEnginePackage.utils.Utils;
+
+public class BlurPass {
+	private BlurShader shader;
+	private int quadVAO;
+	private int fbo;
+	private int colorTexture;
+	
+	private int width;
+	private int height;
+	
+	public BlurPass(int width, int height) {
+		this.width = width;
+		this.height = height; 
+		
+		shader = new BlurShader();
+		
+	}
+	
+	public void render(int inputColorTexture,
+			int velocityTexture, float velocityScale) {
+		shader.bind();
+		shader.loadVelocityScale(velocityScale);
+		
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+		
+		GL30.glActiveTexture(GL30.GL_TEXTURE0);
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, inputColorTexture);
+		
+		GL30.glActiveTexture(GL30.GL_TEXTURE1);
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, velocityTexture);
+		
+		shader.unbind();
+	}
+	
+	private int createFullscreenQuad() {
+		float[] vertices = {
+				-1f, -1f, 0f, 0f,
+				1f, -1f, 1f, 0f,
+				-1f, 1f, 0f, 1f,
+				-1f, 1f, 0f, 1f,
+				1f, -1f, 1f, 0f,
+				1f, 1f, 1f, 1f,
+		};
+		
+		int vaoID = GL30.glGenVertexArrays();
+		int vboID = GL30.glGenBuffers();
+		
+		GL30.glBindVertexArray(vaoID);
+		GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, vboID);
+		FloatBuffer buffer = Utils.storeDataInFloatBuffer(vertices);
+		
+	}
+}

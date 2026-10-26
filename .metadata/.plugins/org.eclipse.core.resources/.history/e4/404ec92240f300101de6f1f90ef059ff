@@ -1,0 +1,8 @@
+package GameEnginePackage;
+
+import GameEnginePackage.managers.RenderManager;
+
+public class MasterRenderer {
+	private ShaderManager shader;
+	private RenderManager renderer;
+}

@@ -1,0 +1,227 @@
+package GameEnginePackage;
+
+import java.util.List;
+
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.opengl.GL30;
+
+import GameEnginePackage.entity.Camera;
+import GameEnginePackage.entity.Entity;
+import GameEnginePackage.entity.FullScreenShader;
+import GameEnginePackage.entity.Light;
+import GameEnginePackage.entity.Model;
+import GameEnginePackage.entity.ModelTexture;
+import GameEnginePackage.utils.Maths;
+
+public class RenderManager {
+	private static final float FOV = 70;
+	private static final float NEAR_PLANE = 0.1f;
+	private static final float FAR_PLANE = 1000f;
+	
+	private final WindowDisplay display;
+	private ShaderManager shader;
+	private BlurPass blur;
+	private Matrix4f projectionMatrix;
+	private FullScreenShader fullscreen;
+	
+	private int sceneFBO;
+	private int depthFBO;
+	private int sceneColorTex;
+	private int velocityTex;
+		
+	public RenderManager() {
+		display = Launcher.getWindow();
+		createProjectionMatrix(display.getWidth(), display.getHeight());
+	}
+	
+	public void init() throws Exception {
+		shader = new ShaderManager();
+		shader.bind();
+		shader.loadProjectionMatrix(projectionMatrix);
+		GL30.glEnable(GL30.GL_DEPTH_TEST);
+		GL30.glEnable(GL30.GL_CULL_FACE);
+		GL30.glCullFace(GL30.GL_BACK);
+		shader.unbind();
+		
+		sceneFBO = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, sceneFBO);
+		
+		sceneColorTex = GL30.glGenTextures();
+		
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, sceneColorTex);
+		GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RGBA8,
+				display.getWidth(), display.getHeight(), 0,
+				GL30.GL_RGBA, GL30.GL_UNSIGNED_BYTE, 0);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MAG_FILTER, GL30.GL_LINEAR);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MIN_FILTER, GL30.GL_LINEAR);
+		
+		GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, 
+				GL30.GL_COLOR_ATTACHMENT0, GL30.GL_TEXTURE_2D,
+				sceneColorTex, 0);
+		
+		velocityTex = GL30.glGenTextures();
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, velocityTex);
+		GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RG16F, 
+				display.getWidth(), display.getHeight(), 0, 
+				GL30.GL_RG, GL30.GL_FLOAT, 0);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MIN_FILTER, GL30.GL_LINEAR);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MAG_FILTER, GL30.GL_LINEAR);
+		GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, 
+				GL30.GL_COLOR_ATTACHMENT1, GL30.GL_TEXTURE_2D,
+				velocityTex, 0);
+		
+		depthFBO = GL30.glGenRenderbuffers();
+		GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, depthFBO);
+		GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, 
+				GL30.GL_DEPTH24_STENCIL8, display.getWidth(), 
+				display.getHeight());
+		GL30.glFramebufferRenderbuffer(GL30.GL_FRAMEBUFFER,
+				GL30.GL_DEPTH_STENCIL_ATTACHMENT,
+				GL30.GL_RENDERBUFFER,
+				depthFBO);
+		
+		GL30.glDrawBuffers(new int[] {
+				GL30.GL_COLOR_ATTACHMENT0,
+				GL30.GL_COLOR_ATTACHMENT1
+		});
+		
+		if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER) != 
+				GL30.GL_FRAMEBUFFER_COMPLETE) {
+			System.err.println("ERROR");
+		}
+		
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		blur = new BlurPass(display.getWidth(), display.getHeight());
+		fullscreen = new FullScreenShader();
+	}
+	
+	public void updateProjection(int width, int height) {
+		createProjectionMatrix(width, height);
+		shader.bind();
+		shader.loadProjectionMatrix(projectionMatrix);
+		shader.unbind();
+		
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, sceneColorTex);
+		GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RGBA8,
+				display.getWidth(), display.getHeight(), 0,
+				GL30.GL_RGBA, GL30.GL_UNSIGNED_BYTE, 0);
+		
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, velocityTex);
+		GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RG16F, 
+				display.getWidth(), display.getHeight(), 0, 
+				GL30.GL_RG, GL30.GL_FLOAT, 0);
+		
+		GL30.glBindRenderbuffer(GL30.GL_RENDERBUFFER, depthFBO);
+		GL30.glRenderbufferStorage(GL30.GL_RENDERBUFFER, 
+				GL30.GL_DEPTH24_STENCIL8, display.getWidth(), 
+				display.getHeight());
+		
+		blur.resize(width, height);
+	}
+	
+	public void render(List<Entity> entities, Camera camera, Light light) {
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, sceneFBO);
+		GL30.glViewport(0, 0, display.getWidth(), display.getHeight());
+		clear();
+		
+		GL30.glEnable(GL30.GL_DEPTH_TEST);
+		shader.bind();
+		
+
+		Matrix4f viewMatrix = Maths.createViewMatrix(camera);
+		shader.loadViewMatrix(viewMatrix);
+		shader.loadLight(light);
+		
+		for(Entity entity: entities) {
+				Model model = entity.getModel();
+				Matrix4f transform = Maths.createTransformationMatrix(
+					entity.getPosition(), entity.getRotX(), entity.getRotY(),
+					entity.getRotZ(), entity.getScale());
+				shader.loadTransformationMatrix(transform);
+				
+				ModelTexture texture = model.getTexture();
+				shader.loadShineVariables(texture.getShineDamper(), 
+						texture.getReflectivity());
+				
+				if (entity.getPrevTransformation() != null) {
+					shader.loadPrevMatrix(entity.getPrevTransformation());
+				} else{
+					shader.loadPrevMatrix(transform);
+				}
+				
+				GL30.glBindVertexArray(model.getId());
+				GL30.glEnableVertexAttribArray(0);
+				GL30.glEnableVertexAttribArray(1);
+				GL30.glEnableVertexAttribArray(2);
+				GL30.glActiveTexture(GL30.GL_TEXTURE0);
+				GL30.glBindTexture(GL30.GL_TEXTURE_2D, 
+						model.getTexture().getID());
+				GL30.glDrawElements(GL30.GL_TRIANGLES, 
+						model.getVertexCount(),
+						GL30.GL_UNSIGNED_INT, 0);
+				GL30.glDisableVertexAttribArray(0);
+				GL30.glDisableVertexAttribArray(1);
+				GL30.glDisableVertexAttribArray(2);
+				GL30.glBindVertexArray(0);
+				
+				
+				shader.setPrevMatrix(viewMatrix, projectionMatrix);
+				entity.setPrevTransformation(transform);
+		}
+		shader.unbind();
+		
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		blur.blurRender(sceneColorTex, velocityTex, 1f);	
+		
+		GL30.glDisable(GL30.GL_DEPTH_TEST);
+		
+		int blurredTex = blur.getBlurredTextures();
+		
+		fullscreen.bind();
+		fullscreen.connectTextureUnit();
+		
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		GL30.glClear(GL30.GL_COLOR_BUFFER_BIT);
+		
+		GL30.glBindVertexArray(blur.getQuadVAO());
+		GL30.glEnableVertexAttribArray(0);
+		GL30.glEnableVertexAttribArray(1);
+	
+		GL30.glActiveTexture(GL30.GL_TEXTURE0);
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, blurredTex);
+
+		GL30.glDrawArrays(GL30.GL_TRIANGLES, 0, 6);
+		
+		fullscreen.unbind();
+		GL30.glBindVertexArray(0);	
+	}
+	
+	private void createProjectionMatrix(int width, int height) {
+		float aspectRatio = (float)width/
+				(float)height;
+		float y_scale = (float) ((1f/Math.tan(Math.toRadians(FOV/2f))));
+		float x_scale = y_scale/aspectRatio;
+		float frustrum_length = FAR_PLANE - NEAR_PLANE;
+		
+		projectionMatrix = new Matrix4f();
+		projectionMatrix.m00(x_scale);
+		projectionMatrix.m11(y_scale);
+		projectionMatrix.m22(-((FAR_PLANE + NEAR_PLANE)/frustrum_length));
+		projectionMatrix.m23(-1);
+		projectionMatrix.m32(-((2 * FAR_PLANE * NEAR_PLANE)/frustrum_length));
+		projectionMatrix.m33(0);
+	}
+	
+	public void clear() {
+		GL30.glClear(GL30.GL_COLOR_BUFFER_BIT | GL30.GL_DEPTH_BUFFER_BIT);
+	}
+	
+	public void cleanup() {
+		shader.cleanup();
+	}
+}

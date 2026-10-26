@@ -1,0 +1,51 @@
+package GameEnginePackage.shaders;
+
+import GameEnginePackage.entity.Shader;
+
+public class BlurShader extends Shader {
+	private static final String BLUR_VERTEX = "src/shaders/blurVertex.txt";
+	private static final String BLUR_FRAGMENT = "src/shaders/blur.txt";
+	
+	private int location_velocityScale;
+	private int location_nSamples;
+	private int location_uTexInput;
+	private int location_uTexVelocity;
+	
+	public BlurShader() {
+		super(BLUR_VERTEX, BLUR_FRAGMENT);
+	}
+
+	@Override
+	protected void getAllUniformLocations() {
+		// TODO Auto-generated method stub
+		location_velocityScale = 
+				super.getUniformLocation("uVelocityScale");
+		location_nSamples = 
+				super.getUniformLocation("nSamples");
+		location_uTexInput = 
+				super.getUniformLocation("uTexInput");
+		location_uTexVelocity = 
+				super.getUniformLocation("uTexVelocity");
+	}
+	
+	public void loadVelocityScale(float uVelocityScale) {
+		super.loadFloat(location_velocityScale, uVelocityScale);
+	}
+	
+	public void loadSamples(int nSamples) {
+		super.loadInt(location_nSamples, nSamples);
+	}
+	
+	public void connectTextures() {
+		super.loadInt(location_uTexInput, 0);
+		super.loadInt(location_uTexVelocity, 1);
+	}
+
+	@Override
+	protected void bindAttributes() {
+		// TODO Auto-generated method stub
+		super.bindAttribute(0, "position");
+		super.bindAttribute(1, "texCoords");
+		
+	}
+}

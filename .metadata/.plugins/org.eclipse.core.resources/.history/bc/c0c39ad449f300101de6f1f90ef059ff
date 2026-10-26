@@ -1,0 +1,141 @@
+package GameEnginePackage.managers;
+
+import java.nio.FloatBuffer;
+
+import org.lwjgl.opengl.GL30;
+
+import GameEnginePackage.shaders.BlurShader;
+import GameEnginePackage.utils.Utils;
+
+public class BlurPass {
+	private BlurShader shader;
+	private int quadVAO;
+	private int quadVBO;
+	private int fbo;
+	private int colorTexture;
+	
+	private int width;
+	private int height;
+	
+	public BlurPass(int width, int height) {
+		this.width = width;
+		this.height = height; 
+		
+		shader = new BlurShader();
+		quadVAO = createFullscreenQuad();
+		createFBO();
+	}
+	
+	private int createFullscreenQuad() {
+		float[] vertices = {
+				-1f, -1f, 0f, 0f,
+				1f, -1f, 1f, 0f,
+				-1f, 1f, 0f, 1f,
+				-1f, 1f, 0f, 1f,
+				1f, -1f, 1f, 0f,
+				1f, 1f, 1f, 1f,
+		};
+		
+		int vaoID = GL30.glGenVertexArrays();
+		quadVBO = GL30.glGenBuffers();
+		
+		GL30.glBindVertexArray(vaoID);
+		GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, quadVBO);
+		FloatBuffer buffer = Utils.storeDataInFloatBuffer(vertices);
+		GL30.glBufferData(GL30.GL_ARRAY_BUFFER, buffer, GL30.GL_STATIC_DRAW);
+		
+		GL30.glVertexAttribPointer(0, 2, GL30.GL_FLOAT, false,
+				4 * Float.BYTES, 0);
+		GL30.glEnableVertexAttribArray(0);
+		
+		GL30.glVertexAttribPointer(1, 2, GL30.GL_FLOAT, false,
+				4 * Float.BYTES, 2 * Float.BYTES);
+		GL30.glEnableVertexAttribArray(1);
+		
+		GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, 0);
+		GL30.glBindVertexArray(0);
+		
+		return vaoID;	
+	}
+	
+	private void createFBO() {
+		fbo = GL30.glGenFramebuffers();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+		
+		colorTexture = GL30.glGenTextures();
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, colorTexture);
+		
+		GL30.glTexImage2D(GL30.GL_TEXTURE_2D, 0, GL30.GL_RGBA8,
+				width, height, 0, GL30.GL_RGBA, GL30.GL_UNSIGNED_BYTE, 0);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MAG_FILTER, GL30.GL_LINEAR);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_MIN_FILTER, GL30.GL_LINEAR);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_WRAP_S, GL30.GL_CLAMP_TO_EDGE);
+		GL30.glTexParameteri(GL30.GL_TEXTURE_2D, 
+				  GL30.GL_TEXTURE_WRAP_T, GL30.GL_CLAMP_TO_EDGE);
+		
+		GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, 
+				GL30.GL_COLOR_ATTACHMENT0, GL30.GL_TEXTURE_2D,
+				colorTexture, 0);
+		
+		GL30.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
+		
+		if(GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER) != 
+				GL30.GL_FRAMEBUFFER_COMPLETE) {
+			System.err.println("ERROR");
+		}
+		
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+	}
+	
+	public void blurRender(int inputColorTexture, int velocityTexture, 
+			float velocityScale) {
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+		GL30.glViewport(0, 0, width, height);
+		GL30.glClear(GL30.GL_COLOR_BUFFER_BIT);
+		
+		shader.bind();
+		shader.connectTextures();
+		shader.loadVelocityScale(velocityScale);
+		shader.loadSamples(32);
+		
+		GL30.glActiveTexture(GL30.GL_TEXTURE0);
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, inputColorTexture);
+		
+		GL30.glActiveTexture(GL30.GL_TEXTURE1);
+		GL30.glBindTexture(GL30.GL_TEXTURE_2D, velocityTexture);
+		
+		GL30.glBindVertexArray(quadVAO);
+		GL30.glEnableVertexAttribArray(0);
+		GL30.glEnableVertexAttribArray(1);
+		
+		GL30.glDrawArrays(GL30.GL_TRIANGLES, 0, 6);
+		
+		GL30.glDisableVertexAttribArray(0);
+		GL30.glDisableVertexAttribArray(1);
+		GL30.glBindVertexArray(0);
+		
+		shader.unbind();
+		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+	}
+	
+	public int getBlurredTextures() {
+		return colorTexture;
+	}
+
+	public int getQuadVAO() {
+		return quadVAO;
+	}
+	
+	public void resize(int width, int height) {
+		this.width = width;
+		this.height = height;
+		
+		GL30.glDeleteFramebuffers(fbo);
+		GL30.glDeleteTextures(colorTexture);
+		
+		createFBO();
+	}
+}

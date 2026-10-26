@@ -1,0 +1,16 @@
+#version 400 core
+
+uniform sampler2D uTexInput;
+uniform sampler2D uTexVelocity;
+
+uniform float uVelocityScale;
+
+out vec4 oResult;
+
+void (main){
+	vec2 texelSize = 1.0/ vec2(textureSize(uTexInput, 0));
+	vec2 screenTexCoords = gl_FragCoord.xy * texelSize;
+	
+	vec2 velocity = texture(uTexMotion, screenTexCoords).rg;
+	velocity * = uVelocityScale;
+}

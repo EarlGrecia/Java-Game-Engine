@@ -1,0 +1,28 @@
+package GameEnginePackage;
+
+import org.joml.*;
+
+public class WindowDisplay {
+	public static final float FOV = (float)Math.toRadians(60);
+	public static final float Z_NEAR = 0.01f;
+	public static final float Z_FAR = 1000f;
+	
+	private final String title;
+	private int width;
+	private int height;
+	
+	private long window;
+	private boolean resize;
+	private boolean vSync;
+	
+	private final Matrix4f projectionMatrix;
+	
+	public WindowDisplay(String title, int width, int height, boolean vSync) {
+		this.title = title;
+		this.width = width;
+		this.height = height;
+		this.vSync = vSync;
+		projectionMatrix = new Matrix4f();
+	}
+	
+}

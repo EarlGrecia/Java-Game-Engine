@@ -1,0 +1,95 @@
+package GameEnginePackage;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.lwjgl.opengl.GL30.*;
+import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+
+import GameEnginePackage.entity.Model;
+import GameEnginePackage.utils.Utils;
+
+public class ObjectLoader {
+	private List <Integer> vaos = new ArrayList<Integer>();
+	private List <Integer> vbos = new ArrayList<Integer>();
+	private List <Integer> textures = new ArrayList<Integer>();
+	
+	public Model loadModel(float[] vertices) {
+		int id = createVAO();
+		storeDataInAttribList(0, 3, vertices);
+		unbind();
+		return new Model(id, vertices.length / 3);
+	}
+	
+	private int createVAO() {
+		int id = GL30.glGenVertexArrays();
+		vaos.add(id);
+		GL30.glBindVertexArray(id);
+		return id;
+	}
+	
+	private void storeDataInAttribList(int attribNo, int vertexCount, 
+			float[] data) {
+		int vbo = GL30.glGenBuffers();
+		vbos.add(vbo);
+		GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, vbo);
+		FloatBuffer buffer = Utils.storeDataInFloatBuffer(data);
+		GL30.glBufferData(GL30.GL_ARRAY_BUFFER, buffer, GL30.GL_STATIC_DRAW);
+		GL30.glVertexAttribPointer(attribNo, vertexCount, GL30.GL_FLOAT, false,
+				0, 0);
+		GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, 0);
+	}
+	
+	private void unbind() {
+		GL30.glBindVertexArray(0);
+	}
+	
+	 public int loadTexture(String path) {
+		  
+		  int textureID;
+		  int width, height;
+		  ByteBuffer image;
+		        
+		        try (MemoryStack stack = MemoryStack.stackPush()) {
+		            IntBuffer w = stack.mallocInt(1);
+		            IntBuffer h = stack.mallocInt(1);
+		            IntBuffer comp = stack.mallocInt(1);
+
+		            image = stbi_load("res/"+path+".png", w, h, comp, 4);
+		            if (image == null) {
+		             System.out.println("Failed to load texture file: "+path+"\n" +
+		            stbi_failure_reason()
+		               );
+		            }
+		            width = w.get();
+		            height = h.get();
+		        }
+		        
+		        textureID = glGenTextures();
+		        glBindTexture(GL_TEXTURE_2D, textureID);
+		        textures.add(textureID);
+		        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //sets MINIFICATION filtering to nearest
+		  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //sets MAGNIFICATION filtering to nearest
+		  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);   
+		  return textureID;
+		 }
+	
+	public void cleanup() {
+		for(int vao: vaos) {
+			GL30.glDeleteVertexArrays(vao);
+		}
+		
+		for(int vbo: vbos) {
+			GL30.glDeleteBuffers(vbo);
+		}
+		
+		for(int texture: textures) {
+			GL30.glDeleteTextures(texture);
+		}
+	}
+}

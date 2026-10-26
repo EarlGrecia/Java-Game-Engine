@@ -1,0 +1,70 @@
+package GameEnginePackage.entity;
+
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.lwjgl.glfw.GLFW;
+
+import GameEnginePackage.Launcher;
+import GameEnginePackage.MouseInput;
+import GameEnginePackage.WindowDisplay;
+
+public class Camera {
+	private Vector3f position = new Vector3f(0, 0, 0);
+	private final WindowDisplay window = Launcher.getWindow();
+	private final MouseInput mouse = new MouseInput();
+	private float pitch;
+	private float yaw;
+	private float roll;
+	
+	public Camera() {
+		mouse.init();
+		mouse.input();
+	}
+	
+	public void move() {
+		if(window.isKeyPressed(GLFW.GLFW_KEY_UP) ||
+				window.isKeyPressed(GLFW.GLFW_KEY_W)) {
+			position.z -= 0.02f;	
+		}
+		
+		if(window.isKeyPressed(GLFW.GLFW_KEY_DOWN)||
+				window.isKeyPressed(GLFW.GLFW_KEY_S)) {
+			position.z += 0.02f;
+		}
+		
+		if(window.isKeyPressed(GLFW.GLFW_KEY_LEFT)||
+				window.isKeyPressed(GLFW.GLFW_KEY_A)) {
+			position.x -= 0.02f;
+		}
+		
+		if(window.isKeyPressed(GLFW.GLFW_KEY_RIGHT)||
+				window.isKeyPressed(GLFW.GLFW_KEY_D)) {
+			position.x += 0.02f;
+		}
+		
+		
+		if(mouse.isLeftButtonPress()) {
+			Vector2f rotVex = mouse.getDisplayVec();
+			pitch += rotVex.x;
+			yaw += rotVex.y;
+		}
+	}
+
+	public Vector3f getPosition() {
+		return position;
+	}
+
+	public float getPitch() {
+		return pitch;
+	}
+
+	public float getYaw() {
+		return yaw;
+	}
+
+	public float getRoll() {
+		return roll;
+	}
+	
+	
+}

@@ -1,0 +1,38 @@
+package GameEnginePackage;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.lwjgl.opengl.GL30;
+import GameEnginePackage.entity.Model;
+
+public class ObjectLoader {
+	private List <Integer> vaos = new ArrayList<>();
+	private List <Integer> vbos = new ArrayList<>();
+	
+	public Model loadModel(float[] vertices) {
+		
+	}
+	
+	private int createVAO() {
+		
+	}
+	
+	private void storeDataInAttribList(int attribNo, int vertexCount, 
+			float[] data) {
+		
+	}
+	
+	private void unbind() {
+		GL30.glBindVertexArray(0);
+	}
+	
+	private void cleanup() {
+		for(int vao: vaos) {
+			GL30.glDeleteVertexArrays(vao);
+		}
+		
+		for(int vbo: vbos) {
+			GL30.glDeleteBuffers(vbo);
+		}
+	}
+}

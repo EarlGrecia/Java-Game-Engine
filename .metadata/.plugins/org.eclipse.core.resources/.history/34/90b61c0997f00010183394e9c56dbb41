@@ -1,0 +1,30 @@
+package GameEnginePackage;
+
+import org.lwjgl.Version;
+
+import GameEnginePackage.EngineManager;
+import GameEnginePackage.WindowDisplay;
+import GameEnginePackage.utils.Consts;
+
+public class Launcher {
+	
+	private static WindowDisplay display;
+	private static EngineManager engine;
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		display = new WindowDisplay(Consts.TITLE, 1280, 720, true);
+		engine = new EngineManager();
+		try {
+			engine.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static WindowDisplay getWindow() {
+		// TODO Auto-generated method stub
+		return display;
+	}
+
+}

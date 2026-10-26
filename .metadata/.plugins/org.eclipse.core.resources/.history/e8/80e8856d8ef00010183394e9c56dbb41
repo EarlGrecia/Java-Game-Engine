@@ -1,0 +1,27 @@
+package GameEnginePackage;
+
+import org.lwjgl.Version;
+
+public class Launcher {
+	
+	private static WindowDisplay display;
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		System.out.println(Version.getVersion());
+		
+		display = new WindowDisplay("Dev", 1280, 720, false);
+		
+		while(!display.windowShouldClose()) {
+			display.update();
+		}
+		
+		display.cleanup();
+	}
+
+	public static WindowDisplay getWindow() {
+		// TODO Auto-generated method stub
+		return display;
+	}
+
+}
